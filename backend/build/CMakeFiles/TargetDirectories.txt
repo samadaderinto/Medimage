@@ -1,0 +1,3 @@
+/Users/samad/Documents/GitHub/Medimage/backend/build/CMakeFiles/MyProject.dir
+/Users/samad/Documents/GitHub/Medimage/backend/build/CMakeFiles/edit_cache.dir
+/Users/samad/Documents/GitHub/Medimage/backend/build/CMakeFiles/rebuild_cache.dir

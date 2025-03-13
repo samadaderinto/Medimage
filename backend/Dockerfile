@@ -4,9 +4,9 @@ FROM ubuntu:20.04
 # Set non-interactive mode
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install necessary packages
+# Update, install necessary packages with no-recommends, and clean up in one layer
 RUN apt-get update && \
-    apt-get install -y clang++ build-essential curl libcurl4-openssl-dev libssl-dev cmake && \
+    apt-get install -y --no-install-recommends clang++ build-essential curl libcurl4-openssl-dev libssl-dev cmake && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory to /app
