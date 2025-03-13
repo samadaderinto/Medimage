@@ -1,27 +1,24 @@
-FROM ubuntu:22.04
+# Use an official Ubuntu base image
+FROM ubuntu:20.04
 
-# Install dependencies
-RUN apt update && apt install -y \
-    clang \
-    cmake \
-    git \
-    libboost-all-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Set non-interactive mode
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Set working directory
+# Install necessary packages
+RUN apt-get update && \
+    apt-get install -y clang++ build-essential curl libcurl4-openssl-dev libssl-dev cmake && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set the working directory to /app
 WORKDIR /app
 
-# Copy source code
+# Copy the entire project into the container
 COPY . .
 
-# Create build directory, compile project
-RUN mkdir build && cd build && cmake .. && make
+# Create a build directory and compile the project,
+# ensuring that the executable is built from server.cpp
+RUN mkdir -p build && \
+    clang++ -std=c++17 -I./include -o build/server server.cpp -lcurl
 
-# Create upload directory
-RUN mkdir -p /app/uploads
-
-# Expose server port
-EXPOSE 8080
-
-# Run the server
+# Set the default command to run the executable from the build directory
 CMD ["./build/server"]
