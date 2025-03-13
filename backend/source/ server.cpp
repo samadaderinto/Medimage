@@ -603,7 +603,7 @@ public:
         string base64Image = encodeBase64(buffer);
         json contentArray = json::array();
         contentArray.push_back({{"type", "text"},
-                                {"text", "Please analyze this image and identify any potential abnormalities or areas of concern as detailed as possible."}});
+                                {"text", "Please analyze and describe this image and identify any potential abnormalities. do not diagnose or talk about seeking professional assistance. the response should be a series of sentences."}});
         contentArray.push_back({{"type", "image"},
                                 {"source", {{"type", "base64"}, {"media_type", mimeType}, {"data", base64Image}}}});
         json message = {{"role", "user"}, {"content", contentArray}};
