@@ -14,16 +14,90 @@
 #include <openssl/rand.h>
 #include <onnxruntime_cxx_api.h>
 
-
 using namespace cv;
 using namespace std;
 using json = nlohmann::json;
 
 #define UPLOAD_DIR "./resources/preprocessed/" // Directory to store uploaded images
 
+// Cloudinary credentials
+#define CLOUD_NAME "dd0ogn2qg"
+#define API_KEY "782955842683427"
+#define API_SECRET "YZG1IJY7BJ7InxCD9LZQ7w205gU"
 
+// Callback function to capture response
+size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+    ((string *)userp)->append((char *)contents, size * nmemb);
+    return size * nmemb;
+}
 
-int final_results() {
+// Function to upload image
+void uploadImage(const string &imagePath)
+{
+    CURL *curl;
+    CURLcode res;
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+
+    if (curl)
+    {
+        string response;
+        string apiUrl = "https://api.cloudinary.com/v1_1/" + string(CLOUD_NAME) + "/image/upload";
+        string apiKey = "api_key=" + string(API_KEY);
+        string uploadPreset = "upload_preset=unsigned"; // Change if using presets
+        string fileField = "file=@" + imagePath;
+
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Content-Type: multipart/form-data");
+
+        curl_easy_setopt(curl, CURLOPT_URL, apiUrl.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+        curl_mime *mime;
+        curl_mimepart *part;
+        mime = curl_mime_init(curl);
+
+        // File part
+        part = curl_mime_addpart(mime);
+        curl_mime_name(part, "stored_thyroid.dat");
+        curl_mime_filedata(part, imagePath.c_str());
+
+        // API Key part
+        part = curl_mime_addpart(mime);
+        curl_mime_name(part, "api_key");
+        curl_mime_data(part, API_KEY, CURL_ZERO_TERMINATED);
+
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK)
+        {
+            cerr << "Failed to upload: " << curl_easy_strerror(res) << endl;
+        }
+        else
+        {
+            cout << "Upload Successful! Response: " << response << endl;
+        }
+
+        curl_easy_cleanup(curl);
+        curl_mime_free(mime);
+        curl_global_cleanup();
+    }
+}
+
+int upload_to_cloudinary()
+{
+    string imagePath = "thyroid_ultrasound.jpg";
+    uploadImage(imagePath);
+    return 0;
+}
+
+int final_results()
+{
     // Initialize ONNX Runtime environment
     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "ThyroidClassification");
 
@@ -35,7 +109,7 @@ int final_results() {
     // Load the ONNX model
     const std::string model_path = "C:\\Users\\USER\\Documents\\MyPythonProjects\\ThyroidClassification\\thyroid_ultrasound_model.onnx";
     std::wstring model_path_w = std::filesystem::path(model_path).wstring();
-    
+
     // Create ONNX Runtime session
     Ort::Session session(env, model_path_w.c_str(), session_options);
 
@@ -56,7 +130,8 @@ int final_results() {
 
     // Load and preprocess the image using OpenCV
     cv::Mat image = cv::imread(image_path);
-    if (image.empty()) {
+    if (image.empty())
+    {
         std::cerr << "Error: Unable to load image at " << image_path << std::endl;
         return -1;
     }
@@ -73,7 +148,8 @@ int final_results() {
     std::vector<cv::Mat> channels(3);
     cv::split(image, channels);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         std::memcpy(input_tensor_values.data() + i * 224 * 224,
                     channels[i].data, 224 * 224 * sizeof(float));
     }
@@ -86,32 +162,31 @@ int final_results() {
         input_tensor_values.data(),
         input_tensor_values.size(),
         input_shape.data(),
-        input_shape.size()
-    );
+        input_shape.size());
 
     // Run the ONNX model
-    std::vector<const char*> input_names = {input_name.get()};
-    std::vector<const char*> output_names = {output_name.get()};
-    
+    std::vector<const char *> input_names = {input_name.get()};
+    std::vector<const char *> output_names = {output_name.get()};
+
     std::cout << "Running inference on the model..." << std::endl;
-    
+
     auto output_tensors = session.Run(
         Ort::RunOptions{nullptr},
         input_names.data(),
         &input_tensor,
         1,
         output_names.data(),
-        1
-    );
+        1);
 
     std::cout << "Inference completed successfully." << std::endl;
 
     // Get the output data (predictions)
-    float* output_data = output_tensors[0].GetTensorMutableData<float>();
+    float *output_data = output_tensors[0].GetTensorMutableData<float>();
 
     // Debugging: Print raw output tensor values
     std::cout << "Raw output tensor values: ";
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         std::cout << output_data[i] << " ";
     }
     std::cout << std::endl;
@@ -123,7 +198,6 @@ int final_results() {
 
     return 0;
 }
-
 
 // function to save image as binary
 void save_processed_image(const Mat &image, const string &filename)
