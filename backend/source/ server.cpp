@@ -1,6 +1,6 @@
-// ================================================================
-// Includes & Namespace Declarations
-// ================================================================
+// ====================================================================
+//                           INCLUDES
+// ====================================================================
 #include "crow.h"
 #include <fstream>
 #include <vector>
@@ -22,24 +22,24 @@ using namespace cv;
 using namespace std;
 using json = nlohmann::json;
 
-// ================================================================
-// Global Constants & Macros
-// ================================================================
-
+// ====================================================================
+//                        GLOBAL CONSTANTS & MACROS
+// ====================================================================
 #define UPLOAD_DIR "./resources/preprocessed/"  // Directory to store uploaded images
 
-// ================================================================
-// Utility Functions (Environment, Base64, etc.)
-// ================================================================
+// ====================================================================
+//                  ENVIRONMENT & UTILITY FUNCTIONS
+// ====================================================================
 
-// Load environment variables from a file (default path: "../.env")
+// Loads environment variables from a file (default path: "../.env")
 map<string, string> loadEnvFile(const string &filePath = "../.env") {
     map<string, string> envVars;
     ifstream envFile(filePath);
     if (envFile.is_open()) {
         string line;
         while (getline(envFile, line)) {
-            if (line.empty() || line[0] == '#') continue;
+            if (line.empty() || line[0] == '#')
+                continue;
             size_t pos = line.find('=');
             if (pos != string::npos) {
                 string key = line.substr(0, pos);
@@ -55,13 +55,13 @@ map<string, string> loadEnvFile(const string &filePath = "../.env") {
     return envVars;
 }
 
-// Callback function to capture response (used for both Cloudinary upload and Anthropic API)
+// Callback function used by libcurl to capture responses
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) {
     ((string *)userp)->append((char *)contents, size * nmemb);
     return size * nmemb;
 }
 
-// Function to encode image to base64
+// Encodes a binary buffer to a Base64 string
 string encodeBase64(const vector<char> &buffer) {
     static const string base64_chars =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -70,6 +70,7 @@ string encodeBase64(const vector<char> &buffer) {
     string encoded;
     int i = 0, j = 0;
     unsigned char char_array_3[3], char_array_4[4];
+
     for (size_t idx = 0; idx < buffer.size(); ++idx) {
         char_array_3[i++] = buffer[idx];
         if (i == 3) {
@@ -77,33 +78,35 @@ string encodeBase64(const vector<char> &buffer) {
             char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
             char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
             char_array_4[3] = char_array_3[2] & 0x3f;
-            for (i = 0; i < 4; i++) encoded += base64_chars[char_array_4[i]];
+            for (i = 0; i < 4; i++)
+                encoded += base64_chars[char_array_4[i]];
             i = 0;
         }
     }
     if (i) {
-        for (j = i; j < 3; j++) char_array_3[j] = '\0';
+        for (j = i; j < 3; j++)
+            char_array_3[j] = '\0';
         char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
         char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
         char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-        for (j = 0; j < i + 1; j++) encoded += base64_chars[char_array_4[j]];
-        while ((i++ < 3)) encoded += '=';
+        for (j = 0; j < i + 1; j++)
+            encoded += base64_chars[char_array_4[j]];
+        while ((i++ < 3))
+            encoded += '=';
     }
     return encoded;
 }
 
-// ================================================================
-// Cloudinary Upload Functions (Updated to Use .env)
-// ================================================================
+// ====================================================================
+//                      CLOUDINARY UPLOAD FUNCTIONS
+// ====================================================================
 
-// Function to upload image to Cloudinary using libcurl,
-// now reading credentials from the .env file.
+// Uploads an image to Cloudinary using libcurl; Cloudinary credentials are loaded from .env.
 void uploadImage(const string &imagePath) {
-    // Load Cloudinary credentials from .env
     map<string, string> envVars = loadEnvFile();
     string cloudName = envVars["CLOUDINARY_CLOUD_NAME"];
     string apiKey    = envVars["CLOUDINARY_API_KEY"];
-    // string apiSecret = envVars["CLOUDINARY_API_SECRET"]; // Include if needed
+    // string apiSecret = envVars["CLOUDINARY_API_SECRET"]; // Uncomment if needed
 
     CURL *curl;
     CURLcode res;
@@ -111,32 +114,36 @@ void uploadImage(const string &imagePath) {
     curl = curl_easy_init();
     if (curl) {
         string response;
-        // Build the API URL using the loaded cloudName.
         string apiUrl = "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload";
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: multipart/form-data");
         curl_easy_setopt(curl, CURLOPT_URL, apiUrl.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
         curl_mime *mime = curl_mime_init(curl);
         curl_mimepart *part;
+
         // File part
         part = curl_mime_addpart(mime);
         curl_mime_name(part, "file");
         curl_mime_filedata(part, imagePath.c_str());
+
         // API Key part
         part = curl_mime_addpart(mime);
         curl_mime_name(part, "api_key");
         curl_mime_data(part, apiKey.c_str(), CURL_ZERO_TERMINATED);
+
         curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
         res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
+
+        if (res != CURLE_OK)
             cerr << "Failed to upload: " << curl_easy_strerror(res) << endl;
-        } else {
+        else
             cout << "Upload Successful! Response: " << response << endl;
-        }
+
         curl_easy_cleanup(curl);
         curl_mime_free(mime);
         curl_global_cleanup();
@@ -149,26 +156,31 @@ int upload_to_cloudinary() {
     return 0;
 }
 
-// ================================================================
-// ONNX Model Analysis Function
-// ================================================================
+// ====================================================================
+//                       ONNX MODEL ANALYSIS
+// ====================================================================
 
 int final_results() {
     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "ThyroidClassification");
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+
     const string model_path = "C:\\Users\\USER\\Documents\\MyPythonProjects\\ThyroidClassification\\thyroid_ultrasound_model.onnx";
     wstring model_path_w = filesystem::path(model_path).wstring();
+
     Ort::Session session(env, model_path_w.c_str(), session_options);
     Ort::AllocatorWithDefaultOptions allocator;
     unique_ptr<char, Ort::detail::AllocatedFree> input_name = session.GetInputNameAllocated(0, allocator);
     unique_ptr<char, Ort::detail::AllocatedFree> output_name = session.GetOutputNameAllocated(0, allocator);
+
     cout << "Input Tensor Name: " << input_name.get() << endl;
     cout << "Output Tensor Name: " << output_name.get() << endl;
+
     string image_path;
     cout << "Enter the path to the image: ";
     getline(cin, image_path);
+
     Mat image = imread(image_path);
     if (image.empty()) {
         cerr << "Error: Unable to load image at " << image_path << endl;
@@ -177,13 +189,13 @@ int final_results() {
     resize(image, image, Size(224, 224));
     image.convertTo(image, CV_32F, 1.0 / 255.0);
     cvtColor(image, image, COLOR_BGR2RGB);
+
     vector<float> input_tensor_values(3 * 224 * 224);
     vector<Mat> channels(3);
     split(image, channels);
-    for (int i = 0; i < 3; i++) {
-        memcpy(input_tensor_values.data() + i * 224 * 224,
-               channels[i].data, 224 * 224 * sizeof(float));
-    }
+    for (int i = 0; i < 3; i++)
+        memcpy(input_tensor_values.data() + i * 224 * 224, channels[i].data, 224 * 224 * sizeof(float));
+
     vector<int64_t> input_shape = {1, 3, 224, 224};
     Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
     Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
@@ -192,41 +204,44 @@ int final_results() {
         input_tensor_values.size(),
         input_shape.data(),
         input_shape.size());
+
     vector<const char *> input_names = {input_name.get()};
     vector<const char *> output_names = {output_name.get()};
+
     cout << "Running inference on the model..." << endl;
-    auto output_tensors = session.Run(
-        Ort::RunOptions{nullptr},
-        input_names.data(),
-        &input_tensor,
-        1,
-        output_names.data(),
-        1);
+    auto output_tensors = session.Run(Ort::RunOptions{nullptr},
+                                      input_names.data(),
+                                      &input_tensor,
+                                      1,
+                                      output_names.data(),
+                                      1);
     cout << "Inference completed successfully." << endl;
+
     float *output_data = output_tensors[0].GetTensorMutableData<float>();
     cout << "Raw output tensor values: ";
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
         cout << output_data[i] << " ";
-    }
     cout << endl;
+
     vector<string> labels = {"normal thyroid", "malignant", "benign"};
     int predicted_class = max_element(output_data, output_data + 3) - output_data;
     cout << "Predicted Diagnosis: " << labels[predicted_class] << endl;
+
     return 0;
 }
 
-// ================================================================
-// Image Storage and Encryption Functions
-// ================================================================
+// ====================================================================
+//             IMAGE STORAGE & ENCRYPTION FUNCTIONS
+// ====================================================================
 
-// Function to save image as binary
+// Save an image as a binary file
 void save_processed_image(const Mat &image, const string &filename) {
     ofstream file(filename, ios::binary);
     file.write(reinterpret_cast<const char *>(image.data), image.total() * image.elemSize());
     file.close();
 }
 
-// Function to load an image from a binary file
+// Load an image from a binary file
 Mat loadImage(const string &filename, int rows, int cols, int type) {
     ifstream file(filename, ios::binary);
     vector<uchar> buffer((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
@@ -234,13 +249,13 @@ Mat loadImage(const string &filename, int rows, int cols, int type) {
     return image.clone();
 }
 
-// Function to read image file into a vector of unsigned char
+// Read an image file into a vector of unsigned char
 vector<unsigned char> readImageFile(const string &filename) {
     ifstream file(filename, ios::binary);
     return vector<unsigned char>((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
 }
 
-// Function to write image file from a vector of unsigned char
+// Write a vector of unsigned char to an image file
 void writeImageFile(const string &filename, const vector<unsigned char> &data) {
     ofstream file(filename, ios::binary);
     file.write(reinterpret_cast<const char *>(data.data()), data.size());
@@ -248,20 +263,19 @@ void writeImageFile(const string &filename, const vector<unsigned char> &data) {
 
 // OpenSSL AES keys and IV (hardcoded for now)
 const unsigned char AES_USER_KEY[16] = {
-    '1', '2', '3', '4', '5', '6', '7', '8',
-    '9', '0', 'a', 'b', 'c', 'd', 'e', 'f'
+    '1','2','3','4','5','6','7','8',
+    '9','0','a','b','c','d','e','f'
 };
-
 const unsigned char AES_IV[16] = {
-    'f', 'e', 'd', 'c', 'b', 'a', '0', '9',
-    '8', '7', '6', '5', '4', '3', '2', '1'
+    'f','e','d','c','b','a','0','9',
+    '8','7','6','5','4','3','2','1'
 };
 
-// Function to encrypt data
+// Encrypt data using AES-128-CBC
 void encryptImage(const vector<unsigned char> &inputData, vector<unsigned char> &encryptedData) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     int len, ciphertext_len;
-    encryptedData.resize(inputData.size() + 16);
+    encryptedData.resize(inputData.size() + 16); // Allocate extra space for padding
     EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, AES_USER_KEY, AES_IV);
     EVP_EncryptUpdate(ctx, encryptedData.data(), &len, inputData.data(), inputData.size());
     ciphertext_len = len;
@@ -271,7 +285,7 @@ void encryptImage(const vector<unsigned char> &inputData, vector<unsigned char> 
     EVP_CIPHER_CTX_free(ctx);
 }
 
-// Function to decrypt data
+// Decrypt data using AES-128-CBC
 void decryptImage(const vector<unsigned char> &encryptedData, vector<unsigned char> &decryptedData) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     int len, plaintext_len;
@@ -316,10 +330,11 @@ int image_storage() {
     return 0;
 }
 
-// ================================================================
-// Image Quantification & Analysis Functions (Metrics, Segmentation, etc.)
-// ================================================================
+// ====================================================================
+//                IMAGE QUANTIFICATION & ANALYSIS
+// ====================================================================
 
+// Compute basic entropy of a grayscale image
 double computeEntropy(const Mat &grayImage) {
     vector<int> histogram(256, 0);
     for (int i = 0; i < grayImage.rows; i++)
@@ -417,6 +432,7 @@ double computeSkewness(const Mat &grayImage) {
     return sum / (pixelCount * pow(stddev[0], 3));
 }
 
+// Structure to hold object metrics from segmentation
 struct ObjectMetrics {
     double area;
     double perimeter;
@@ -440,6 +456,7 @@ vector<ObjectMetrics> detectObjectsEnhanced(const Mat &binaryImage) {
     return objects;
 }
 
+// Structure to hold morphological analysis results
 struct MorphologicalMetrics {
     Mat dilated;
     Mat eroded;
@@ -463,6 +480,7 @@ MorphologicalMetrics performMorphologicalAnalysis(const Mat &binaryImage) {
     return metrics;
 }
 
+// Structure for statistical metrics
 struct StatisticalMetrics {
     double mean;
     double variance;
@@ -507,6 +525,7 @@ int image_quantification() {
     double sharpness = computeSharpness(image);
     double noiseLevel = computeNoiseLevel(image);
     Size resolution = computeResolution(image);
+
     cout << "===== Enhanced Image Quantification Metrics =====" << endl;
     cout << "\nBasic Metrics:" << endl;
     cout << "Entropy: " << entropy << endl;
@@ -530,8 +549,7 @@ int image_quantification() {
         cout << "Object " << i + 1 << ":" << endl;
         cout << "  Area: " << objectMetrics[i].area << " pixels" << endl;
         cout << "  Perimeter: " << objectMetrics[i].perimeter << " pixels" << endl;
-        cout << "  Centroid: (" << objectMetrics[i].centroid.x << ", " 
-             << objectMetrics[i].centroid.y << ")" << endl;
+        cout << "  Centroid: (" << objectMetrics[i].centroid.x << ", " << objectMetrics[i].centroid.y << ")" << endl;
         totalArea += objectMetrics[i].area;
         totalPerimeter += objectMetrics[i].perimeter;
     }
@@ -539,6 +557,7 @@ int image_quantification() {
     cout << "Total Perimeter: " << totalPerimeter << " pixels" << endl;
     cout << "\nMorphological Analysis:" << endl;
     cout << "Area Change After Dilation: " << morphMetrics.areaChange << "%" << endl;
+
     imshow("Original Image", image);
     imshow("Segmented Image", segmentedImage);
     imshow("Dilated Image", morphMetrics.dilated);
@@ -549,9 +568,9 @@ int image_quantification() {
     return 0;
 }
 
-// ================================================================
-// Image Analysis Function (using ClaudeMedicalImageAnalyzer)
-// ================================================================
+// ====================================================================
+//                IMAGE ANALYSIS (CLAUDE MEDICAL ANALYZER)
+// ====================================================================
 class ClaudeMedicalImageAnalyzer {
 private:
     string api_key;
@@ -561,15 +580,13 @@ public:
         : api_key(key), model(model_name) {}
     string analyzeMedicalImage(const string &imagePath) {
         ifstream file(imagePath, ios::binary | ios::ate);
-        if (!file.is_open()) {
+        if (!file.is_open())
             return "Error: Could not open image file";
-        }
         streamsize size = file.tellg();
         file.seekg(0, ios::beg);
         vector<char> buffer(size);
-        if (!file.read(buffer.data(), size)) {
+        if (!file.read(buffer.data(), size))
             return "Error: Could not read image file";
-        }
         string extension = imagePath.substr(imagePath.find_last_of(".") + 1);
         string mimeType;
         if (extension == "jpg" || extension == "jpeg")
@@ -582,6 +599,7 @@ public:
             mimeType = "application/dicom";
         else
             return "Error: Unsupported image format. Supported formats include JPEG, PNG, GIF, and DICOM.";
+
         string base64Image = encodeBase64(buffer);
         json contentArray = json::array();
         contentArray.push_back({{"type", "text"},
@@ -610,9 +628,8 @@ public:
             CURLcode res = curl_easy_perform(curl);
             curl_slist_free_all(headers);
             curl_easy_cleanup(curl);
-            if (res != CURLE_OK) {
+            if (res != CURLE_OK)
                 return "Error: " + string(curl_easy_strerror(res));
-            }
         }
         cout << "Raw response: " << response << endl;
         try {
@@ -651,16 +668,14 @@ int image_analyser() {
     return 0;
 }
 
-// ================================================================
-// Image Processing Function (uses processImage from original code)
-// ================================================================
+// ====================================================================
+//                    IMAGE PROCESSING FUNCTION
+// ====================================================================
 
-// Original processImage function (note: uses argv, ideally should be refactored)
+// Original processImage function (currently uses argv; should be refactored)
 int processImage() {
-    // In the original code, processImage uses argv[3] and argv[2].
-    // For this rearrangement, assume it processes an image file and writes the output.
-    // You may need to refactor this function in a real application.
-    // For now, we call it as is.
+    // Here, we assume processImage reads from argv[3] and writes to argv[2].
+    // For this example, this function is left unchanged.
     Image test(argv[3]);
     Image gray_lum = test;
     gray_lum.grayscale_lum();
@@ -668,9 +683,9 @@ int processImage() {
     return 0;
 }
 
-// ================================================================
-// Crow Application & Upload Route (Endpoint)
-// ================================================================
+// ====================================================================
+//                      CROW WEB SERVER & ROUTES
+// ====================================================================
 
 int main() {
     crow::SimpleApp app;
@@ -680,12 +695,11 @@ int main() {
         return "Hello, Clang Docker!";
     });
 
-    // Upload route: processes the image through several steps and returns final results as JSON
+    // Upload route: Executes the full pipeline and returns final results as JSON.
     CROW_ROUTE(app, "/upload").methods(crow::HTTPMethod::Post)([](const crow::request &req) {
-        // Step 0: Save uploaded file
-        if (req.body.empty()) {
+        // Step 0: Save the uploaded file.
+        if (req.body.empty())
             return crow::response(400, "No file uploaded");
-        }
         string uploadPath = "uploaded_image.jpg";
         ofstream file(uploadPath, ios::binary);
         file.write(req.body.c_str(), req.body.size());
@@ -694,35 +708,35 @@ int main() {
         // Step 1: Process the image (using processImage function)
         int processStatus = processImage();
 
-        // Step 2: Save the preprocessed image
-        Mat preprocessed = imread("processed.jpg"); // Assume processImage outputs "processed.jpg"
+        // Step 2: Save the preprocessed image.
+        Mat preprocessed = imread("processed.jpg");  // Assume processImage outputs "processed.jpg"
         bool saveStatus = false;
         if (!preprocessed.empty()) {
-            vector<uint8_t> preprocessedData(preprocessed.data, preprocessed.data + preprocessed.total() * preprocessed.elemSize());
-            // Note: Make sure you have a function named save_preprocessed_image; here we reuse save_processed_image.
+            vector<uint8_t> preprocessedData(preprocessed.data,
+                                              preprocessed.data + preprocessed.total() * preprocessed.elemSize());
             saveStatus = true;
             save_processed_image(preprocessed, string(UPLOAD_DIR) + "processed_saved.jpg");
         }
 
-        // Step 3: Analyze the image
+        // Step 3: Analyze the image.
         int analysisStatus = image_analyser();
 
-        // Step 4: Quantify the image
+        // Step 4: Quantify the image.
         int quantStatus = image_quantification();
 
-        // Step 5: Encrypt the image
+        // Step 5: Encrypt the image.
         int encryptStatus = image_encryption();
 
-        // Step 6: Store the encrypted image locally
+        // Step 6: Store the encrypted image locally.
         int storageStatus = image_storage();
 
-        // Step 7: Upload the image to the cloud
+        // Step 7: Upload the image to Cloudinary.
         int uploadStatus = upload_to_cloudinary();
 
-        // Step 8: Get final results from model inference
+        // Step 8: Get final results from model inference.
         int finalStatus = final_results();
 
-        // Combine statuses into a JSON response
+        // Combine statuses into a JSON response.
         crow::json::wvalue response;
         response["process_image"] = processStatus;
         response["save_preprocessed"] = saveStatus;
