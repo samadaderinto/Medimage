@@ -17,6 +17,10 @@ const Page = () => {
     return averageAccuracy;
   };
 
+  
+  console.log("");
+  
+
   const cards = [
     {
       title: "Total scans",
