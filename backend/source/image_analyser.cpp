@@ -294,7 +294,7 @@ int main()
     ClaudeMedicalImageAnalyzer analyzer(api_key);
 
     // Use the image in the project root directory
-    std::string imagePath = "../mri_1.jpeg";
+    std::string imagePath = "../resources/mri_1.jpeg";
 
     std::cout << "Analyzing the medical image with Claude 3.7 Sonnet: " << imagePath << std::endl;
     std::string result = analyzer.analyzeMedicalImage(imagePath);

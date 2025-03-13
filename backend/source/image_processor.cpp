@@ -1,4 +1,4 @@
-#include "image.h"
+#include "../include/image.h"
 #include "iostream"
 #include "cstring"
 #include "string"

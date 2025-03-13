@@ -1,4 +1,4 @@
-#include "image.h"
+#include "../include/image.h"
 #include <fstream>
 #include <sstream>
 using namespace std;
