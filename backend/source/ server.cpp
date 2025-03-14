@@ -4,6 +4,7 @@
 #include "crow.h"
 #include <fstream>
 #include <vector>
+#include <sstream>
 #include <iostream>
 #include <string>
 #include <map>
@@ -134,52 +135,70 @@ int processImage(string image_path)
 //                  CROW WEB SERVER & ROUTES
 // ====================================================================
 
-int main()
-{
+int main() {
     crow::SimpleApp app;
 
-    // CORS middleware to allow cross-origin requests
-    app.before([](const crow::request &req)
-               {
-    crow::response res;
-    res.add_header("Access-Control-Allow-Origin", "*"); // Allow any origin or set to "http://localhost:3000" for more security
-    res.add_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.add_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    // CORS Middleware: Allow cross-origin requests from the specified origin
+    app.before([](const crow::request &req) {
+        crow::response res;
+        
+        // Allow all origins (for development purposes), change this to "http://localhost:3000" in production for security
+        res.add_header("Access-Control-Allow-Origin", "*");  // Change "*" to "http://localhost:3000" in production for more security
+        
+        // Allow all methods that you are using (GET, POST, OPTIONS, etc.)
+        res.add_header("Access-Control-Allow-Methods", "*");
+        
+        // Allow specific headers (you can adjust this based on your needs)
+        res.add_header("Access-Control-Allow-Headers", "*");
 
-    // If it's an OPTIONS request (preflight), send a quick response to allow the main request to go through
-    if (req.method == crow::HTTPMethod::Options) {
-      return crow::response(200);
-    }
+        // Handle preflight OPTIONS requests (this is necessary for CORS to work)
+        if (req.method == crow::HTTPMethod::Options) {
+            return crow::response(200); // Respond with 200 OK for OPTIONS preflight requests
+        }
 
-    return crow::response(); });
-
-    // Home route
-    CROW_ROUTE(app, "/")([]()
-                         { return "Hello, Medimage!"; });
+        return crow::response(); // Continue with the request processing
+    });
 
     // Upload route
-    CROW_ROUTE(app, "/upload").methods(crow::HTTPMethod::Post)([](const crow::request &req)
-                                                               {
-        if (req.body.empty())
-            return crow::response(400, "No file uploaded");
+    CROW_ROUTE(app, "/upload").methods(crow::HTTPMethod::Post)([](const crow::request &req) {
+        if (!req.has_file("file")) {
+            return crow::response(400, "No image uploaded");
+        }
 
-        string uploadPath = "uploaded_image.jpg";
-        ofstream file(uploadPath, ios::binary);
-        file.write(req.body.c_str(), req.body.size());
-        file.close();
+        // Get the file from the form data (field name: "file")
+        std::string fileName = "uploaded_image.jpg"; // Default filename
+        const auto& file = req.get_file("file");
+        fileName = file.filename();
 
-        // ✅ Call processImage instead of undefined Image class functions
+        // Define the upload path dynamically using the uploaded file's name
+        std::string uploadPath = "uploads/" + fileName;
+
+        // Write the file to the server
+        std::ofstream fileStream(uploadPath, std::ios::binary);
+        if (!fileStream.is_open()) {
+            return crow::response(500, "Failed to save the uploaded file");
+        }
+
+        fileStream.write(req.body.c_str(), req.body.size());
+        fileStream.close();
+
+        // Call image processing and model inference
         int processStatus = processImage(uploadPath);
-        if (processStatus != 0)
+        if (processStatus != 0) {
             return crow::response(500, "Image processing failed");
+        }
 
         int finalStatus = final_results();
-        if (finalStatus != 0)
+        if (finalStatus != 0) {
             return crow::response(500, "Model inference failed");
+        }
 
+        // Respond with a success message
         crow::json::wvalue response;
         response["message"] = "Image processed and analyzed successfully";
-        return crow::response(200, response); });
+        return crow::response(200, response);
+    });
 
+    // Run the server on port 8080
     app.port(8080).multithreaded().run();
 }

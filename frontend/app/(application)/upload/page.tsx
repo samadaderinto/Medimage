@@ -66,7 +66,6 @@ const Page = () => {
   const onSubmit = async (values: PatientFormValues) => {
     setLoading(true);
 
-    console.log(values.scan);
     
     const formData = new FormData();
     
@@ -74,7 +73,8 @@ const Page = () => {
 
     try {
       const response = await fetch("http://localhost:8080/upload", {
-        method: "POST",  // Ensure this is POST
+        method: "POST",
+        mode: 'no-cors',
         body: formData,
       });
 
