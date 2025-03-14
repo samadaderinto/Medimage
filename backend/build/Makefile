@@ -117,24 +117,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named MyProject
+# Target rules for targets named Medimage
 
 # Build rule for target.
-MyProject: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 MyProject
-.PHONY : MyProject
+Medimage: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Medimage
+.PHONY : Medimage
 
 # fast build rule for target.
-MyProject/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyProject.dir/build.make CMakeFiles/MyProject.dir/build
-.PHONY : MyProject/fast
+Medimage/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Medimage.dir/build.make CMakeFiles/Medimage.dir/build
+.PHONY : Medimage/fast
 
 source/_server.o: source/_server.cpp.o
 .PHONY : source/_server.o
 
 # target to build an object file
 source/_server.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyProject.dir/build.make CMakeFiles/MyProject.dir/source/_server.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Medimage.dir/build.make CMakeFiles/Medimage.dir/source/_server.cpp.o
 .PHONY : source/_server.cpp.o
 
 source/_server.i: source/_server.cpp.i
@@ -142,7 +142,7 @@ source/_server.i: source/_server.cpp.i
 
 # target to preprocess a source file
 source/_server.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyProject.dir/build.make CMakeFiles/MyProject.dir/source/_server.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Medimage.dir/build.make CMakeFiles/Medimage.dir/source/_server.cpp.i
 .PHONY : source/_server.cpp.i
 
 source/_server.s: source/_server.cpp.s
@@ -150,7 +150,7 @@ source/_server.s: source/_server.cpp.s
 
 # target to generate assembly for a file
 source/_server.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyProject.dir/build.make CMakeFiles/MyProject.dir/source/_server.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Medimage.dir/build.make CMakeFiles/Medimage.dir/source/_server.cpp.s
 .PHONY : source/_server.cpp.s
 
 # Help Target
@@ -161,7 +161,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... MyProject"
+	@echo "... Medimage"
 	@echo "... source/_server.o"
 	@echo "... source/_server.i"
 	@echo "... source/_server.s"

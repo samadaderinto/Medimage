@@ -11,6 +11,13 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/3.31.6/CMakeCCompiler.cmake"
   "CMakeFiles/3.31.6/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.31.6/CMakeSystem.cmake"
+  "/opt/homebrew/lib/cmake/Crow/CrowConfig.cmake"
+  "/opt/homebrew/lib/cmake/Crow/CrowTargets.cmake"
+  "/opt/homebrew/lib/cmake/Crow/Findasio.cmake"
+  "/opt/homebrew/lib/cmake/opencv4/OpenCVConfig-version.cmake"
+  "/opt/homebrew/lib/cmake/opencv4/OpenCVConfig.cmake"
+  "/opt/homebrew/lib/cmake/opencv4/OpenCVModules-release.cmake"
+  "/opt/homebrew/lib/cmake/opencv4/OpenCVModules.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeCCompiler.cmake.in"
   "/opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c"
   "/opt/homebrew/share/cmake/Modules/CMakeCInformation.cmake"
@@ -27,6 +34,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompilerSupport.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeDetermineSystem.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeFindDependencyMacro.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeGenericSystem.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeInitializeConfigs.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeLanguageInformation.cmake"
@@ -40,6 +48,9 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/homebrew/share/cmake/Modules/CMakeTestCXXCompiler.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeTestCompilerCommon.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeUnixFindMake.cmake"
+  "/opt/homebrew/share/cmake/Modules/CheckCSourceCompiles.cmake"
+  "/opt/homebrew/share/cmake/Modules/CheckIncludeFile.cmake"
+  "/opt/homebrew/share/cmake/Modules/CheckLibraryExists.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/ADSP-DetermineCompiler.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/ARMCC-DetermineCompiler.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/ARMClang-DetermineCompiler.cmake"
@@ -98,10 +109,16 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/homebrew/share/cmake/Modules/Compiler/XLClang-CXX-DetermineCompiler.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/zOS-C-DetermineCompiler.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/zOS-CXX-DetermineCompiler.cmake"
+  "/opt/homebrew/share/cmake/Modules/FindOpenSSL.cmake"
+  "/opt/homebrew/share/cmake/Modules/FindPackageHandleStandardArgs.cmake"
+  "/opt/homebrew/share/cmake/Modules/FindPackageMessage.cmake"
+  "/opt/homebrew/share/cmake/Modules/FindPkgConfig.cmake"
+  "/opt/homebrew/share/cmake/Modules/FindThreads.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCLinkerInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeDetermineLinkerId.cmake"
+  "/opt/homebrew/share/cmake/Modules/Internal/CheckSourceCompiles.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/FeatureTesting.cmake"
   "/opt/homebrew/share/cmake/Modules/Linker/AppleClang-C.cmake"
   "/opt/homebrew/share/cmake/Modules/Linker/AppleClang-CXX.cmake"
@@ -118,6 +135,9 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/homebrew/share/cmake/Modules/Platform/Linker/Apple-AppleClang-CXX.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/Linker/Apple-AppleClang.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/UnixPaths.cmake"
+  "/opt/homebrew/share/cmake/nlohmann_json/nlohmann_jsonConfig.cmake"
+  "/opt/homebrew/share/cmake/nlohmann_json/nlohmann_jsonConfigVersion.cmake"
+  "/opt/homebrew/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake"
   )
 
 # The corresponding makefile is:
@@ -138,5 +158,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "CMakeFiles/MyProject.dir/DependInfo.cmake"
+  "CMakeFiles/Medimage.dir/DependInfo.cmake"
   )
