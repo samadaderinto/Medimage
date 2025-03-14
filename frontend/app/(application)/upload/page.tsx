@@ -66,18 +66,32 @@ const Page = () => {
   const onSubmit = async (values: PatientFormValues) => {
     setLoading(true);
 
+    console.log(values.scan);
+    
     const formData = new FormData();
+    
     formData.append("file", values?.scan as File);
 
-    const response = await fetch("http://0.0.0.0:8080/upload", {
-      method: "POST",
-      body: formData,
-    }).then((res) => res.json());
+    try {
+      const response = await fetch("http://localhost:8080/upload", {
+        method: "POST",  // Ensure this is POST
+        body: formData,
+      });
 
-    console.log(response);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Upload successful", data);
+      } else {
+        console.error("Error uploading file:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
     setLoading(false);
 
   };
+
+
 
   useEffect(() => {
     form.setValue("conditions", thyroidArray);
@@ -185,7 +199,7 @@ const Page = () => {
                       <FormLabel>Age</FormLabel>
                       <FormControl>
                         <Input
-                        min={0}
+                          min={0}
                           type="number"
                           className="w-full bg-[#F7F9FF] border border-[#D6E2F9] px-3 py-5"
                           placeholder="Age"
@@ -206,8 +220,8 @@ const Page = () => {
                   <PopoverTrigger className={"outline-none w-full h-full "}>
                     <div
                       className={`${form.formState.errors?.conditions
-                          ? "border-red-600 border"
-                          : ""
+                        ? "border-red-600 border"
+                        : ""
                         } relative min-h-12 max-h-max w-full flex-wrap overflow-x-scroll rounded-md bg-[#F7F9FF] border border-[#D6E2F9] flex gap-1 items-center justify-start outline-none font-sans text-sm text-[#818181]rounded-lg px-[1.05rem] py-2`}
                     >
                       {thyroidArray?.length > 0 ? (

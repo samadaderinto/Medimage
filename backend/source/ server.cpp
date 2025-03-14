@@ -138,6 +138,21 @@ int main()
 {
     crow::SimpleApp app;
 
+    // CORS middleware to allow cross-origin requests
+    app.before([](const crow::request &req)
+               {
+    crow::response res;
+    res.add_header("Access-Control-Allow-Origin", "*"); // Allow any origin or set to "http://localhost:3000" for more security
+    res.add_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.add_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+    // If it's an OPTIONS request (preflight), send a quick response to allow the main request to go through
+    if (req.method == crow::HTTPMethod::Options) {
+      return crow::response(200);
+    }
+
+    return crow::response(); });
+
     // Home route
     CROW_ROUTE(app, "/")([]()
                          { return "Hello, Medimage!"; });
