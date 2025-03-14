@@ -57,7 +57,7 @@ const Page = () => {
       email: "",
       firstName: "",
       lastName: "",
-      age: 0,
+      age: "",
       conditions: [],
     },
   });
@@ -185,9 +185,10 @@ const Page = () => {
                       <FormLabel>Age</FormLabel>
                       <FormControl>
                         <Input
+                        min={0}
                           type="number"
                           className="w-full bg-[#F7F9FF] border border-[#D6E2F9] px-3 py-5"
-                          placeholder="Email"
+                          placeholder="Age"
                           {...field}
                         />
                       </FormControl>

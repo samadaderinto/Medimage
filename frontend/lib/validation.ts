@@ -52,10 +52,9 @@ const patientDetailsSchema = z.object({
     .min(1, { message: "First name is required" }),
 
   lastName: z.string({ required_error: "This field is required" }),
-  age: z.number({ required_error: "This field is required" }),
+  age: z.string({ required_error: "This field is required" }),
   conditions: z
     .array(z.string())
-    .min(2, "At least 2 items required")
     .max(5, "No more than 5 items allowed"),
   scan: fileSchema.optional(),
 });
@@ -63,10 +62,6 @@ const patientDetailsSchema = z.object({
 type PatientFormValues = z.infer<typeof patientDetailsSchema>;
 
 export {
-  loginSchema,
-  type LoginValues,
-  signUpSchema,
-  type SignUpFormValues,
-  patientDetailsSchema,
-  type PatientFormValues,
+  loginSchema, patientDetailsSchema, signUpSchema, type LoginValues, type PatientFormValues, type SignUpFormValues
 };
+
