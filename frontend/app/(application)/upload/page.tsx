@@ -7,6 +7,8 @@ import UnselectedFilter from "@/app/icons/UnselectedFilterIcon";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
 
+import UploadFileIcon from "@/app/icons/UploadFileIcon";
+import XIcon from "@/app/icons/XIcon";
 import {
   Form,
   FormControl,
@@ -23,11 +25,9 @@ import {
 } from "@/components/ui/popover";
 import { patientDetailsSchema, PatientFormValues } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useCallback, useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
 import Image from "next/image";
-import UploadFileIcon from "@/app/icons/UploadFileIcon";
-import XIcon from "@/app/icons/XIcon";
+import { useCallback, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 const Page = () => {
   const thyroidConditions = [
@@ -61,9 +61,22 @@ const Page = () => {
       conditions: [],
     },
   });
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = (values: PatientFormValues) => {
-    console.log(values);
+  const onSubmit = async (values: PatientFormValues) => {
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", values?.scan as File);
+
+    const response = await fetch("http://0.0.0.0:8080/upload", {
+      method: "POST",
+      body: formData,
+    }).then((res) => res.json());
+
+    console.log(response);
+    setLoading(false);
+
   };
 
   useEffect(() => {
@@ -191,11 +204,10 @@ const Page = () => {
                 <Popover>
                   <PopoverTrigger className={"outline-none w-full h-full "}>
                     <div
-                      className={`${
-                        form.formState.errors?.conditions
+                      className={`${form.formState.errors?.conditions
                           ? "border-red-600 border"
                           : ""
-                      } relative min-h-12 max-h-max w-full flex-wrap overflow-x-scroll rounded-md bg-[#F7F9FF] border border-[#D6E2F9] flex gap-1 items-center justify-start outline-none font-sans text-sm text-[#818181]rounded-lg px-[1.05rem] py-2`}
+                        } relative min-h-12 max-h-max w-full flex-wrap overflow-x-scroll rounded-md bg-[#F7F9FF] border border-[#D6E2F9] flex gap-1 items-center justify-start outline-none font-sans text-sm text-[#818181]rounded-lg px-[1.05rem] py-2`}
                     >
                       {thyroidArray?.length > 0 ? (
                         thyroidArray?.map((item: string, index: number) => {
