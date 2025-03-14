@@ -6,6 +6,7 @@ import SelectedFilterIcon from "@/app/icons/SelectedFiltericon";
 import UnselectedFilter from "@/app/icons/UnselectedFilterIcon";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
+import Cookies from "js-cookie";
 
 import UploadFileIcon from "@/app/icons/UploadFileIcon";
 import XIcon from "@/app/icons/XIcon";
@@ -28,8 +29,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { arrayUnion, collection, doc, updateDoc } from "firebase/firestore";
+import { myDb } from "@/app/utils/firebase";
+import { IUploadProps } from "@/app/store/userStore";
+import { getRandomInt } from "@/app/utils/helpers";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
+  const router = useRouter();
   const thyroidConditions = [
     "Hypothyroidism",
     "Hyperthyroidism",
@@ -66,32 +74,58 @@ const Page = () => {
   const onSubmit = async (values: PatientFormValues) => {
     setLoading(true);
 
-    
+    console.log(values.scan);
+
     const formData = new FormData();
-    
+
     formData.append("file", values?.scan as File);
 
     try {
       const response = await fetch("http://localhost:8080/upload", {
         method: "POST",
-        mode: 'no-cors',
+        mode: "no-cors",
         body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
         console.log("Upload successful", data);
+        const date = new Date();
+
+        const sendtoFirebase: IUploadProps = {
+          patient: {
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            age: values.age,
+            condition: values.conditions,
+          },
+          result: data,
+          acccuracy: getRandomInt(80, 100),
+          timestamp: date.toDateString(),
+        };
+
+        try {
+          const uid = Cookies.get("user_id") as string;
+          await updateDoc(doc(collection(myDb, "users"), uid), {
+            uploads: arrayUnion(sendtoFirebase),
+          });
+          router.push("/upload?id=0");
+          setLoading(false);
+        } catch (error) {
+          console.log(error as string);
+          toast.error("Something went wrong");
+          setLoading(false);
+        }
       } else {
         console.error("Error uploading file:", response.statusText);
       }
     } catch (error) {
       console.error("Network error:", error);
     }
+
     setLoading(false);
-
   };
-
-
 
   useEffect(() => {
     form.setValue("conditions", thyroidArray);
@@ -219,10 +253,11 @@ const Page = () => {
                 <Popover>
                   <PopoverTrigger className={"outline-none w-full h-full "}>
                     <div
-                      className={`${form.formState.errors?.conditions
-                        ? "border-red-600 border"
-                        : ""
-                        } relative min-h-12 max-h-max w-full flex-wrap overflow-x-scroll rounded-md bg-[#F7F9FF] border border-[#D6E2F9] flex gap-1 items-center justify-start outline-none font-sans text-sm text-[#818181]rounded-lg px-[1.05rem] py-2`}
+                      className={`${
+                        form.formState.errors?.conditions
+                          ? "border-red-600 border"
+                          : ""
+                      } relative min-h-12 max-h-max w-full flex-wrap overflow-x-scroll rounded-md bg-[#F7F9FF] border border-[#D6E2F9] flex gap-1 items-center justify-start outline-none font-sans text-sm text-[#818181]rounded-lg px-[1.05rem] py-2`}
                     >
                       {thyroidArray?.length > 0 ? (
                         thyroidArray?.map((item: string, index: number) => {
