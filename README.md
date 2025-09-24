@@ -40,7 +40,9 @@ Before running the project, ensure you have the following:
 
 You’ll need to configure the following environment variable(s):
 
-* `ANTHROPIC` → Your Anthropic API key
+* `ANTHROPIC_API_KEY` -> Your Anthropic API key
+* `CLOUDINARY_API_KEY` -> Your Cloudinary API key
+* `CLOUDINARY_API_SECRET` ->  Your Cloudinary API secret
 
 ---
 
