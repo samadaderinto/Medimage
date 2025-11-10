@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface WordByWordTextProps {
   text: string;
@@ -29,7 +29,7 @@ export default function WordByWordText({
     }, delay);
 
     return () => clearInterval(interval);
-  }, [text, delay]);
+  }, [text, delay, words.length]);
 
   return (
     <div className="font-medium text-gray-800 pt-3">

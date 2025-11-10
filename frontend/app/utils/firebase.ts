@@ -7,10 +7,14 @@ import {
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { getVertexAI, getGenerativeModel } from "firebase/vertexai"; // TODO: Add SDKs for Firebase products that you want to use
+import { getGenerativeModel, getVertexAI } from "firebase/vertexai"; // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 // import dotenv from "dotenv";
 // Your web app's Firebase configuration
+
+if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+  throw new Error('Firebase API key is not defined in environment variables');
+}
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -39,4 +43,5 @@ const vertexAI = getVertexAI(myApp);
 
 const model = getGenerativeModel(vertexAI, { model: "gemini-2.0-flash" });
 
-export { myApp, myDb, functions, httpsCallable, vertexAI, model, auth };
+export { auth, functions, httpsCallable, model, myApp, myDb, vertexAI };
+

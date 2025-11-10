@@ -1,12 +1,11 @@
 "use client";
-import AccuracyChart from "@/app/components/AccuracyChart";
-import TopBar from "@/app/components/TopBar";
-import AccuracyIcon from "@/app/icons/AccuracyRate";
-import SuccessfulUploadsIcon from "@/app/icons/SuccessfulUploadsIcon";
-import UploadsIcon from "@/app/icons/UploadsIcon";
-import { useUserDetails } from "@/app/store/userStore";
+import AccuracyChart from "@/components/AccuracyChart";
+import TopBar from "@/components/TopBar";
+import AccuracyIcon from "@/icons/AccuracyRate";
+import SuccessfulUploadsIcon from "@/icons/SuccessfulUploadsIcon";
+import UploadsIcon from "@/icons/UploadsIcon";
+import { useUserDetails } from "@/store/userStore";
 import Image from "next/image";
-import React from "react";
 
 const Page = () => {
   const userDetails = useUserDetails((state) => state.data);

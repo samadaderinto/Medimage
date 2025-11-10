@@ -1,77 +1,67 @@
 cmake_minimum_required(VERSION 3.10)
 project(Medimage)
 
-# Set C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Set vcpkg toolchain if needed
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    set(CMAKE_TOOLCHAIN_FILE "/Users/samad/Documents/GitHub/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+# Add include directories
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Add compiler flags
+add_compile_definitions(CROW_ENABLE_SSL)
+add_compile_definitions(CROW_DISABLE_STATIC_DIR)
+
+# Find dependencies
+
+# Find packages from system or vcpkg if defined
+if(DEFINED CMAKE_TOOLCHAIN_FILE)
+    message(STATUS "Using vcpkg toolchain: ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 
-# Find packages from vcpkg
-find_package(Crow CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
+# Find dependencies
 find_package(OpenCV REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-# === ONNX Runtime Setup (Ensure .dylib is used instead of .dll) ===
+# nlohmann_json from system package
+find_package(nlohmann_json 3 REQUIRED)
 
-# Define ONNX Runtime Path (for macOS)
+# ONNX Runtime setup
 set(ONNXRUNTIME_DIR "${PROJECT_SOURCE_DIR}/external/onnxruntime")
 set(ONNXRUNTIME_INCLUDE_DIR "${ONNXRUNTIME_DIR}/include")
 set(ONNXRUNTIME_LIB_DIR "${ONNXRUNTIME_DIR}/lib")
 
-# Ensure ONNX Runtime Include Directory Exists
-if(EXISTS "${ONNXRUNTIME_INCLUDE_DIR}/onnxruntime_cxx_api.h")
-    message(STATUS "Found ONNX Runtime headers at: ${ONNXRUNTIME_INCLUDE_DIR}")
-    include_directories(${ONNXRUNTIME_INCLUDE_DIR})
-else()
-    message(FATAL_ERROR "ONNX Runtime headers not found in ${ONNXRUNTIME_INCLUDE_DIR}. Please download the macOS version of ONNX Runtime.")
-endif()
+include_directories(${ONNXRUNTIME_INCLUDE_DIR})
+link_directories(${ONNXRUNTIME_LIB_DIR})
 
-# Ensure ONNX Runtime Library Directory Exists
-if(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.dylib")
-    message(STATUS "Found ONNX Runtime library at: ${ONNXRUNTIME_LIB_DIR}/libonnxruntime.dylib")
-    link_directories(${ONNXRUNTIME_LIB_DIR})
-else()
-    message(FATAL_ERROR "ONNX Runtime library not found. Expected libonnxruntime.dylib in ${ONNXRUNTIME_LIB_DIR}. Please download the macOS version.")
-endif()
+# Set RPATH for the executable
+set(CMAKE_INSTALL_RPATH "${ONNXRUNTIME_LIB_DIR}")
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
-# Include directories
-include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(/opt/homebrew/opt/openssl/include)
-
-# Link directories
-link_directories(/opt/homebrew/lib)
-
-# Collect all source files
 file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/source/*.cpp")
 
-# Create the executable
 add_executable(Medimage ${SOURCES})
 
-# Link Crow (from vcpkg)
-target_link_libraries(Medimage PRIVATE Crow::Crow)
+# Link dependencies
+target_link_libraries(Medimage PRIVATE
+    nlohmann_json::nlohmann_json
+    ${OpenCV_LIBS}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    ${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so
+    pthread
+    ssl
+    crypto
+)
 
-# Link JSON (from vcpkg)
-target_link_libraries(Medimage PRIVATE nlohmann_json::nlohmann_json)
-
-# Link OpenCV
-target_link_libraries(Medimage PRIVATE ${OpenCV_LIBS})
-
-# Link OpenSSL
-target_link_libraries(Medimage PRIVATE OpenSSL::SSL OpenSSL::Crypto)
-
-# Link ONNX Runtime (.dylib)
-target_link_libraries(Medimage PRIVATE onnxruntime)
-
-# Ensure necessary ONNX Runtime libraries are copied to the build directory
+# Copy ONNX runtime library if found
 if(APPLE)
-    add_custom_command(TARGET Medimage POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.dylib"
-            "$<TARGET_FILE_DIR:Medimage>"
-    )
+    set(ONNX_LIB_NAME libonnxruntime.dylib)
+else()
+    set(ONNX_LIB_NAME libonnxruntime.so)
 endif()
+
+add_custom_command(TARGET Medimage POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${ONNXRUNTIME_LIB_DIR}/${ONNX_LIB_NAME}"
+        "$<TARGET_FILE_DIR:Medimage>"
+)

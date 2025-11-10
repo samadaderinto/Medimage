@@ -12,4 +12,11 @@ build
 .DS_Store
 .next/
 
+node_modules
+.dockerignore
+Dockerfile
+.git
+.gitignore
+.next
+
 node_modules/

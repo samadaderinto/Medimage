@@ -1,24 +1,60 @@
-# Use an official Ubuntu base image
-FROM ubuntu:20.04
+# Backend
+FROM ubuntu:22.04 AS backend
 
-# Set non-interactive mode
+# Avoid timezone prompt during package installation
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
 
-# Update, install necessary packages with no-recommends, and clean up in one layer
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends clang++ build-essential curl libcurl4-openssl-dev libssl-dev cmake && \
-    rm -rf /var/lib/apt/lists/*
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    libcurl4-openssl-dev \
+    git \
+    libboost-all-dev \
+    python3-pip \
+    libasio-dev \
+    pkg-config \
+    nlohmann-json3-dev \
+    libopencv-dev \
+    wget \
+    unzip
 
-# Set the working directory to /app
-WORKDIR /app
+# Download and build Crow
+WORKDIR /tmp
+RUN git clone https://github.com/CrowCpp/Crow.git && \
+    cd Crow && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DCROW_BUILD_EXAMPLES=OFF -DCROW_BUILD_TESTS=OFF && \
+    cmake --build . && \
+    cmake --install .
 
-# Copy the entire project into the container
+# Download and install ONNX Runtime
+WORKDIR /tmp
+RUN wget https://github.com/microsoft/onnxruntime/releases/download/v1.15.1/onnxruntime-linux-aarch64-1.15.1.tgz && \
+    tar xvf onnxruntime-linux-aarch64-1.15.1.tgz && \
+    mkdir -p /backend/external/onnxruntime && \
+    cp -r onnxruntime-linux-aarch64-1.15.1/* /backend/external/onnxruntime/ && \
+    rm -rf onnxruntime-linux-aarch64-1.15.1*
+
+# Set working directory for our application
+WORKDIR /backend
+
+# Copy the entire backend directory
 COPY . .
 
-# Create a build directory and compile the project,
-# ensuring that the executable is built from server.cpp
-RUN mkdir -p build && \
-    clang++ -std=c++17 -I./include -o build/server server.cpp -lcurl
+# Debug: list include dir to verify Crow headers are present
+RUN echo "Listing /backend/include:" && ls -la /backend/include || true
+RUN echo "Find files under /backend/include:" && find /backend/include -maxdepth 3 -type f -print || true
 
-# Set the default command to run the executable from the build directory
-CMD ["./build/server"]
+# Create build directory and build the project
+RUN mkdir -p build && \
+    cd build && \
+    cmake .. && \
+    cmake --build .
+
+# Run the server
+CMD ["./build/Medimage"]
+
+
